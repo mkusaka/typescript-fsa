@@ -1,6 +1,6 @@
 {
   "name": "typescript-fsa",
-  "version": "2.5.0",
+  "version": "3.0.0",
   "description": "Type-safe action creator utilities",
   "keywords": [
     "redux",
@@ -38,9 +38,17 @@
     "rollup-plugin-replace": "^1.1.1",
     "rollup-plugin-uglify": "^2.0.1",
     "tape": "^4.6.2",
-    "ts-node": "^3.0.6",
+    "ts-node": "^8.4.0",
     "tslint": "^5.0.0",
-    "typescript": "^2.1.5",
-    "typings-tester": "^0.2.2"
+    "typescript": "^3.6.2",
+    "typings-tester": "^0.3.0"
+  },
+  "greenkeeper": {
+    "ignore": [
+      "rollup",
+      "rollup-plugin-execute",
+      "rollup-plugin-replace",
+      "rollup-plugin-uglify"
+    ]
   }
 }

@@ -65,6 +65,186 @@ function testAsyncPayload() {
   });
 }
 
+function testAsyncNoParams() {
+  const asyncNoParams = actionCreator.async<void,
+                                            {bar: string},
+                                            {baz: string}>('ASYNC_NO_PARAMS');
+
+  const started = asyncNoParams.started();
+  // typings:expect-error
+  const started1 = asyncNoParams.started({foo: 'foo'});
+
+  const done = asyncNoParams.done({
+    result: {bar: 'bar'},
+  });
+  // typings:expect-error
+  const done1 = asyncNoParams.done({
+    params: {foo: 'foo'},
+    result: {bar: 'bar'},
+  });
+  // typings:expect-error
+  const done2 = asyncNoParams.done({
+    result: {bar: 1},
+  });
+
+  const failed = asyncNoParams.failed({
+    error: {baz: 'baz'},
+  });
+  // typings:expect-error
+  const failed1 = asyncNoParams.failed({
+    params: {foo: 'foo'},
+    error: {baz: 'baz'},
+  });
+  // typings:expect-error
+  const failed2 = asyncNoParams.failed({
+    error: {baz: 1},
+  });
+}
+
+function testAsyncNoResult() {
+  const asyncNoResult = actionCreator.async<{foo: string},
+                                            void,
+                                            {baz: string}>('ASYNC_NO_RESULT');
+
+  const started = asyncNoResult.started({foo: 'foo'});
+  // typings:expect-error
+  const started1 = asyncNoResult.started({});
+  // typings:expect-error
+  const started2 = asyncNoResult.started();
+
+  const done = asyncNoResult.done({
+    params: {foo: 'foo'},
+  });
+  // typings:expect-error
+  const done1 = asyncNoResult.done({
+    params: {foo: 1},
+  });
+  // typings:expect-error
+  const done2 = asyncNoResult.done({
+    params: {foo: 'foo'},
+    result: {bar: 'bar'},
+  });
+
+  const failed = asyncNoResult.failed({
+    params: {foo: 'foo'},
+    error: {baz: 'baz'},
+  });
+  // typings:expect-error
+  const failed1 = asyncNoResult.failed({
+    params: {foo: 1},
+    error: {baz: 'baz'},
+  });
+  // typings:expect-error
+  const failed2 = asyncNoResult.failed({
+    params: {foo: 'foo'},
+    error: {baz: 1},
+  });
+}
+
+function testAsyncNoParamsAndResult() {
+  const async = actionCreator.async<void,
+                                    void,
+                                    {baz: string}>('ASYNC');
+
+  const started = async.started();
+  // typings:expect-error
+  const started2 = async.started({foo: 'foo'});
+
+  const done = async.done({});
+  // typings:expect-error
+  const done1 = async.done({
+    params: {foo: 'foo'},
+  });
+  // typings:expect-error
+  const done2 = async.done({
+    result: {bar: 'bar'},
+  });
+
+  const failed = async.failed({
+    error: {baz: 'baz'},
+  });
+  // typings:expect-error
+  const failed1 = async.failed({
+    params: {foo: 'foo'},
+    error: {baz: 'baz'},
+  });
+}
+
+function testAsyncGeneric<P, R>(params: P, result: R) {
+  const async = actionCreator.async<P, R>('ASYNC');
+
+  const started = async.started(params);
+  // typings:expect-error
+  const started1 = async.started({});
+  // typings:expect-error
+  const started2 = async.started();
+
+  const done = async.done({
+    params,
+    result,
+  });
+  // typings:expect-error
+  const done1 = async.done({
+    params: {foo: 1},
+    result,
+  });
+  // typings:expect-error
+  const done2 = async.done({
+    params,
+    result: {bar: 1},
+  });
+
+  const failed = async.failed({
+    params,
+    error: {baz: 'baz'},
+  });
+  // typings:expect-error
+  const failed1 = async.failed({
+    params: {foo: 1},
+    error: {baz: 'baz'},
+  });
+}
+
+function testAsyncGenericStrictError<P, R, E>(params: P, result: R, error: E) {
+  const async = actionCreator.async<P, R, E>('ASYNC');
+
+  const started = async.started(params);
+  // typings:expect-error
+  const started1 = async.started({});
+  // typings:expect-error
+  const started2 = async.started();
+
+  const done = async.done({
+    params,
+    result,
+  });
+  // typings:expect-error
+  const done1 = async.done({
+    params: {foo: 1},
+    result,
+  });
+  // typings:expect-error
+  const done2 = async.done({
+    params,
+    result: {bar: 1},
+  });
+
+  const failed = async.failed({
+    params,
+    error,
+  });
+  // typings:expect-error
+  const failed1 = async.failed({
+    params: {foo: 1},
+    error,
+  });
+  // typings:expect-error
+  const failed2 = async.failed({
+    params,
+    error: {baz: 1},
+  });
+}
+
 function testIsType() {
   const withPayload = actionCreator<{foo: string}>('WITH_PAYLOAD');
   const withoutPayload = actionCreator('WITHOUT_PAYLOAD');

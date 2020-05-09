@@ -2,63 +2,63 @@ export interface AnyAction {
   type: any;
 }
 
-export type Meta = null | {[key: string]: any};
+export type Meta = null | { [key: string]: any };
 
-export interface Action<P> extends AnyAction {
+export interface Action<Payload> extends AnyAction {
   type: string;
-  payload: P;
+  payload: Payload;
   error?: boolean;
   meta?: Meta;
 }
 
-export interface Success<P, S> {
-  params: P;
-  result: S;
-}
+export type Success<Params, Result> = (
+  | { params: Params }
+  | (Params extends void ? { params?: Params } : never)) &
+  ({ result: Result } | (Result extends void ? { result?: Result } : never));
 
-export interface Failure<P, E> {
-  params: P;
-  error: E;
-}
+export type Failure<Params, Error> = (
+  | { params: Params }
+  | (Params extends void ? { params?: Params } : never)) & { error: Error };
 
-export function isType<P>(
+export function isType<Payload>(
   action: AnyAction,
-  actionCreator: ActionCreator<P>,
-): action is Action<P> {
+  actionCreator: ActionCreator<Payload>,
+): action is Action<Payload> {
   return action.type === actionCreator.type;
 }
 
-export interface ActionCreator<P> {
+export interface ActionCreator<Payload> {
   type: string;
-  match: (action: AnyAction) => action is Action<P>;
-  (payload: P, meta?: Meta): Action<P>;
+  match: (action: AnyAction) => action is Action<Payload>;
+
+  (payload: Payload, meta?: Meta): Action<Payload>;
 }
 
-export interface EmptyActionCreator extends ActionCreator<undefined> {
-  (payload?: undefined, meta?: Meta): Action<undefined>;
-}
-
-export interface AsyncActionCreators<P, S, E> {
+export interface AsyncActionCreators<Params, Result, Error = {}> {
   type: string;
-  started: ActionCreator<P>;
-  done: ActionCreator<Success<P, S>>;
-  failed: ActionCreator<Failure<P, E>>;
+  started: ActionCreator<Params>;
+  done: ActionCreator<Success<Params, Result>>;
+  failed: ActionCreator<Failure<Params, Error>>;
 }
 
 export interface ActionCreatorFactory {
-  (type: string, commonMeta?: Meta,
-   error?: boolean): EmptyActionCreator;
-  <P>(type: string, commonMeta?: Meta,
-      isError?: boolean): ActionCreator<P>;
-  <P>(type: string, commonMeta?: Meta,
-      isError?: (payload: P) => boolean): ActionCreator<P>;
+  <Payload = void>(
+    type: string,
+    commonMeta?: Meta,
+    isError?: boolean,
+  ): ActionCreator<Payload>;
 
-  async<P, S>(
-    type: string, commonMeta?: Meta,
-  ): AsyncActionCreators<P, S, any>;
-  async<P, S, E>(
-    type: string, commonMeta?: Meta,
-  ): AsyncActionCreators<P, S, E>;
+  <Payload = void>(
+    type: string,
+    commonMeta?: Meta,
+    isError?: (payload: Payload) => boolean,
+  ): ActionCreator<Payload>;
+
+
+  async<Params, Result, Error = {}>(
+    type: string,
+    commonMeta?: Meta,
+  ): AsyncActionCreators<Params, Result, Error>;
 }
 
 declare const process: {
@@ -72,14 +72,15 @@ export function actionCreatorFactory(
   prefix?: string | null,
   defaultIsError: (payload: any) => boolean = p => p instanceof Error,
 ): ActionCreatorFactory {
-  const actionTypes: {[type: string]: boolean} = {};
+  const actionTypes: { [type: string]: boolean } = {};
 
-  const base = prefix ? `${prefix}/` : "";
+  const base = prefix ? `${prefix}/` : '';
 
-  function actionCreator<P>(
-    type: string, commonMeta?: Meta,
-    isError: ((payload: P) => boolean) | boolean = defaultIsError,
-  ): ActionCreator<P> {
+  function actionCreator<Payload>(
+    type: string,
+    commonMeta?: Meta,
+    isError: ((payload: Payload) => boolean) | boolean = defaultIsError,
+  ) {
     const fullType = base + type;
 
     if (process.env.NODE_ENV !== 'production') {
@@ -90,8 +91,8 @@ export function actionCreatorFactory(
     }
 
     return Object.assign(
-      (payload: P, meta?: Meta) => {
-        const action: Action<P> = {
+      (payload: Payload, meta?: Meta) => {
+        const action: Action<Payload> = {
           type: fullType,
           payload,
         };
@@ -109,24 +110,33 @@ export function actionCreatorFactory(
       {
         type: fullType,
         toString: () => fullType,
-        match: (action: AnyAction): action is Action<P> =>
+        match: (action: AnyAction): action is Action<Payload> =>
           action.type === fullType,
       },
-    );
+    ) as ActionCreator<Payload>;
   }
 
-  function asyncActionCreators<P, S, E>(
-    type: string, commonMeta?: Meta,
-  ): AsyncActionCreators<P, S, E> {
+  function asyncActionCreators<Params, Result, Error>(
+    type: string,
+    commonMeta?: Meta,
+  ): AsyncActionCreators<Params, Result, Error> {
     return {
       type: base + type,
-      started: actionCreator<P>(`${type}_STARTED`, commonMeta, false),
-      done: actionCreator<Success<P, S>>(`${type}_DONE`, commonMeta, false),
-      failed: actionCreator<Failure<P, E>>(`${type}_FAILED`, commonMeta, true),
+      started: actionCreator<Params>(`${type}_STARTED`, commonMeta, false),
+      done: actionCreator<Success<Params, Result>>(
+        `${type}_DONE`,
+        commonMeta,
+        false,
+      ),
+      failed: actionCreator<Failure<Params, Error>>(
+        `${type}_FAILED`,
+        commonMeta,
+        true,
+      ),
     };
   }
 
-  return Object.assign(actionCreator, {async: asyncActionCreators});
+  return Object.assign(actionCreator, { async: asyncActionCreators });
 }
 
 export default actionCreatorFactory;
